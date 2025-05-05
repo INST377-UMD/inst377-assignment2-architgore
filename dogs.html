@@ -1,0 +1,116 @@
+<!-- dogs.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dogs - Class Activities</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="stocks.html">Stocks</a></li>
+      <li><a href="dogs.html">Dogs</a></li>
+    </ul>
+  </nav>
+
+  <div class="content">
+    <h1>Dog Gallery</h1>
+
+    <div id="carousel" class="carousel"></div>
+
+    <h2>Dog Breeds</h2>
+    <div id="breed-buttons"></div>
+
+    <div id="breed-info" style="display:none; margin-top: 20px; text-align: left;"></div>
+  </div>
+
+  <div class="audio-controls">
+    <h3>Voice Commands</h3>
+    <ul>
+      <li>"Load Dog Breed Pug" – Displays breed info</li>
+      <li>"Hello" – Alerts Hello World</li>
+      <li>"Change the color to pink" – Changes background</li>
+      <li>"Navigate to home" – Navigates to another page</li>
+    </ul>
+    <button onclick="toggleAnnyang(true)">Turn On Audio</button>
+    <button onclick="toggleAnnyang(false)">Turn Off Audio</button>
+  </div>
+
+  <script>
+    async function loadDogs() {
+      const res = await fetch("https://dog.ceo/api/breeds/image/random/10");
+      const data = await res.json();
+      const carousel = document.getElementById("carousel");
+      carousel.innerHTML = data.message.map(url => `<img src="${url}" class="dog-img" alt="dog">`).join('');
+    }
+
+    async function loadBreeds() {
+      const res = await fetch("https://api.thedogapi.com/v1/breeds");
+      const breeds = await res.json();
+      const container = document.getElementById("breed-buttons");
+      breeds.forEach(breed => {
+        const btn = document.createElement("button");
+        btn.className = "custom-btn";
+        btn.textContent = breed.name;
+        btn.onclick = () => showBreedInfo(breed);
+        container.appendChild(btn);
+      });
+      window.breedMap = Object.fromEntries(breeds.map(b => [b.name.toLowerCase(), b]));
+    }
+
+    function showBreedInfo(breed) {
+      const div = document.getElementById("breed-info");
+      div.style.display = 'block';
+      div.innerHTML = `
+        <h3>${breed.name}</h3>
+        <p><strong>Description:</strong> ${breed.bred_for || 'N/A'}</p>
+        <p><strong>Life Span:</strong> ${breed.life_span}</p>
+        <p><strong>Breed Group:</strong> ${breed.breed_group || 'Unknown'}</p>
+      `;
+    }
+
+    function toggleAnnyang(state) {
+      if (annyang) {
+        const commands = {
+          'load dog breed *breed': breed => {
+            const found = window.breedMap?.[breed.toLowerCase()];
+            if (found) showBreedInfo(found);
+          },
+          'hello': () => alert("Hello World"),
+          'change the color to *color': color => document.body.style.backgroundColor = color,
+          'navigate to *page': page => window.location.href = `${page.toLowerCase()}.html`
+        };
+        annyang.addCommands(commands);
+        state ? annyang.start() : annyang.abort();
+      }
+    }
+
+    loadDogs();
+    loadBreeds();
+    toggleAnnyang(true);
+  </script>
+
+  <style>
+    .dog-img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      margin: 5px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    #carousel {
+      display: flex;
+      overflow-x: auto;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+    }
+  </style>
+</body>
+</html>
